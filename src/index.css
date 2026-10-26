@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: rgba(255, 20, 147, 0.15);
+  }
+
+  body {
+    background-color: #0F0F12;
+    color: #F1F1F5;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0F0F12;
+}
+::-webkit-scrollbar-thumb {
+  background: #23232d;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF1493;
+}
+
+/* Glassmorphism custom classes */
+.glass-panel {
+  background: rgba(26, 26, 34, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 20, 147, 0.18);
+}
+
+.glass-panel-subtle {
+  background: rgba(21, 21, 28, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-panel-hover:hover {
+  border-color: rgba(255, 20, 147, 0.4);
+  box-shadow: 0 0 25px -5px rgba(255, 20, 147, 0.2);
+}
+
+.gradient-border-pink {
+  position: relative;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Animated gradient text */
+.text-gradient-pink {
+  background: linear-gradient(135deg, #FFF 0%, #FF60B2 50%, #FF1493 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #FFF 0%, #FFD066 60%, #FFB800 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Slider Custom Styles */
+.slider-handle-shadow {
+  filter: drop-shadow(0 0 12px rgba(255, 20, 147, 0.8));
+}
+
+/* Focus styles for keyboard a11y */
+.focus-ring {
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-hotpink-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F0F12];
+}
