@@ -100,7 +100,7 @@ export function useGeminiPipeline(apiKey) {
     });
 
     try {
-      // STAGE 1: Spatial Analysis with gemini-2.5-flash
+      // STAGE 1: Spatial Analysis with gemini-3.8-flash
       const stage1Result = await runStage1SpatialAnalysis({
         apiKey,
         imageBase64: activeImageBase64,

@@ -77,7 +77,7 @@ export function PipelineStatus({ pipelineState }) {
               )}
             </div>
             <p className="text-[11px] text-slate-400 truncate">
-              gemini-2.5-flash geometry & lighting scan
+              gemini-3.8-flash geometry & lighting scan
             </p>
           </div>
         </div>

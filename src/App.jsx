@@ -81,7 +81,7 @@ export default function App() {
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Multimodal spatial geometry scanning via <span className="text-slate-200 font-medium">gemini-2.5-flash</span> coupled with in-place architectural redecoration & visual synthesis.
+            Multimodal spatial geometry scanning via <span className="text-slate-200 font-medium">gemini-3.8-flash</span> coupled with in-place architectural redecoration & visual synthesis.
           </p>
         </section>
 

@@ -17,7 +17,7 @@ export function getGenAIClient(apiKey) {
 
 /**
  * STAGE 1: Spatial Layout Analysis & Generative Prompt Expansion
- * Uses gemini-2.5-flash to inspect room geometry, ceiling height, architectural anchors,
+ * Uses gemini-3.8-flash to inspect room geometry, ceiling height, architectural anchors,
  * and synthesize a photorealistic visual prompt plus itemized vendor checklist.
  */
 export async function runStage1SpatialAnalysis({
@@ -44,7 +44,7 @@ export async function runStage1SpatialAnalysis({
   try {
     const ai = getGenAIClient(apiKey);
 
-    if (onProgress) onProgress({ step: 'Submitting spatial vision analysis to gemini-2.5-flash...', percent: 45 });
+    if (onProgress) onProgress({ step: 'Submitting spatial vision analysis to gemini-3.8-flash...', percent: 45 });
 
     const systemPrompt = `You are an elite architectural spatial designer, event venue decorator, and master lighting engineer.
 Analyze the provided empty/bare venue photo and the client's event vision.
@@ -101,7 +101,7 @@ Analyze this venue space and generate the spatial assessment, the master image g
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.8-flash',
       contents
     });
 

@@ -41,13 +41,13 @@ export function ApiKeyModal({ isOpen, onClose, currentKey, onSaveKey, isEnvKey =
     try {
       const ai = new GoogleGenAI({ apiKey: keyToTest });
       const resp = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.8-flash',
         contents: 'Ping test for venue decorator.'
       });
 
       if (resp && resp.text) {
         setTestStatus('success');
-        setTestMessage('API Key verified successfully with gemini-2.5-flash!');
+        setTestMessage('API Key verified successfully with gemini-3.8-flash!');
       } else {
         throw new Error('Unexpected empty response.');
       }
