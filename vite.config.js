@@ -8,6 +8,12 @@ export default defineConfig({
     port: 3000,
     open: false
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.js',
+    css: true
+  },
   build: {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {

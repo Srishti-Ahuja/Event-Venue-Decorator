@@ -172,9 +172,3 @@ npm run preview
 - **Keyboard Operable:** All interactive elements (sliders, tabs, checkboxes, chips, modals) are accessible via `Tab`, `Space`, `Enter`, and Arrow keys with visible focus rings (`focus:ring-2 focus:ring-pink-500`).
 - **Color Contrast:** WCAG AA compliant text contrast against Charcoal `#0F0F12` and `#1A1A22` backgrounds.
 - **Performance:** Optimized bundle chunking (`vendor`, `genai`, `icons`, `css`), client-side thumbnail compression, and memory-safe Canvas compositing.
-
----
-
-## 📜 License
-
-MIT License. Designed and built with Google GenAI SDK.
