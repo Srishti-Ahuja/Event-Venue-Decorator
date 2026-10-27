@@ -136,16 +136,23 @@ export async function createCompositeComparison(originalSrc, decoratedSrc, meta 
 export function exportChecklistToCSV(items, currency = 'USD') {
   if (!items || items.length === 0) return;
 
+  const escapeCSV = (val) => String(val ?? '').replace(/"/g, '""');
+
   const headers = ['Category', 'Item Name', 'Quantity', 'Est. Unit Cost', 'Est. Total Cost', 'Completed', 'Notes'];
-  const rows = items.map(item => [
-    `"${item.category || 'General'}"`,
-    `"${item.name || ''}"`,
-    item.quantity || 1,
-    `"${currency} ${item.unitCost || 0}"`,
-    `"${currency} ${(item.quantity || 1) * (item.unitCost || 0)}"`,
-    item.completed ? 'Yes' : 'No',
-    `"${(item.notes || '').replace(/"/g, '""')}"`
-  ]);
+  const rows = items.map(item => {
+    const qty = Math.max(1, Math.round(Number(item.quantity)) || 1);
+    const unit = Math.max(0, Math.round(Number(item.unitCost)) || 0);
+    const total = qty * unit;
+    return [
+      `"${escapeCSV(item.category || 'General')}"`,
+      `"${escapeCSV(item.name || '')}"`,
+      qty,
+      `"${currency} ${unit}"`,
+      `"${currency} ${total}"`,
+      item.completed ? 'Yes' : 'No',
+      `"${escapeCSV(item.notes || '')}"`
+    ];
+  });
 
   const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

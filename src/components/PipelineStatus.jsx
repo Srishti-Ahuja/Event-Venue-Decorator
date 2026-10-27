@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Sparkles, Scan, Image as ImageIcon, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 
-export function PipelineStatus({ pipelineState }) {
+export const PipelineStatus = memo(function PipelineStatus({ pipelineState }) {
   const {
     status,
     currentStage,
@@ -23,6 +23,7 @@ export function PipelineStatus({ pipelineState }) {
   return (
     <div
       aria-live="polite"
+      aria-label="Pipeline status region"
       className="rounded-2xl glass-panel p-4 sm:p-5 border border-pink-500/30 bg-charcoal-800/90 shadow-pink-glow-sm space-y-3.5 animate-fadeIn"
     >
       {/* Header with Title and Overall Status */}
@@ -133,7 +134,7 @@ export function PipelineStatus({ pipelineState }) {
       </div>
 
       {/* Real-time Status Message */}
-      <div className="flex items-center justify-between text-xs">
+      <div aria-live="polite" aria-atomic="true" className="flex items-center justify-between text-xs">
         <div className="flex items-center space-x-2 text-slate-300 truncate">
           <span className="w-1.5 h-1.5 rounded-full bg-hotpink-400 animate-ping" />
           <span className="truncate">{statusMessage}</span>
@@ -160,4 +161,4 @@ export function PipelineStatus({ pipelineState }) {
       )}
     </div>
   );
-}
+});

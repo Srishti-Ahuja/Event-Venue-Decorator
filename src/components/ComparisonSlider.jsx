@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, memo } from 'react';
 import {
   SlidersHorizontal,
   Columns,
@@ -12,7 +12,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-export function ComparisonSlider({
+export const ComparisonSlider = memo(function ComparisonSlider({
   originalImage,
   decoratedImage,
   title = 'Venue Comparison',
@@ -31,6 +31,7 @@ export function ComparisonSlider({
   const updatePositionFromClientX = useCallback((clientX) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+    if (rect.width <= 0) return;
     const x = clientX - rect.left;
     const clamped = Math.max(0, Math.min(rect.width, x));
     const percent = Math.round((clamped / rect.width) * 100);
@@ -38,17 +39,17 @@ export function ComparisonSlider({
   }, []);
 
   // Mouse event handlers
-  const handleMouseDown = (e) => {
+  const handleMouseDown = useCallback((e) => {
     setIsDragging(true);
     updatePositionFromClientX(e.clientX);
-  };
+  }, [updatePositionFromClientX]);
 
   // Touch event handlers
-  const handleTouchMove = (e) => {
+  const handleTouchMove = useCallback((e) => {
     if (e.touches && e.touches.length > 0) {
       updatePositionFromClientX(e.touches[0].clientX);
     }
-  };
+  }, [updatePositionFromClientX]);
 
   useEffect(() => {
     const handleGlobalMouseMove = (e) => {
@@ -72,7 +73,7 @@ export function ComparisonSlider({
   }, [isDragging, updatePositionFromClientX]);
 
   // Keyboard navigation for accessibility
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (viewMode !== 'split') return;
 
     if (e.key === 'ArrowLeft') {
@@ -88,10 +89,10 @@ export function ComparisonSlider({
       e.preventDefault();
       setSliderPos(100);
     }
-  };
+  }, [viewMode]);
 
   // Toggle Fullscreen
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (!isFullscreen) {
       if (containerRef.current?.requestFullscreen) {
         containerRef.current.requestFullscreen().catch(() => {});
@@ -103,7 +104,7 @@ export function ComparisonSlider({
       }
       setIsFullscreen(false);
     }
-  };
+  }, [isFullscreen]);
 
   // Listen for fullscreen exit via Escape
   useEffect(() => {
@@ -269,7 +270,7 @@ export function ComparisonSlider({
 
               {/* Central Drag Handle */}
               <div className="absolute w-9 h-9 rounded-full bg-hotpink-500 border-2 border-white shadow-pink-glow-lg flex items-center justify-center text-white cursor-ew-resize">
-                <div className="flex items-center space-x-0.5">
+                <div aria-hidden="true" className="flex items-center space-x-0.5">
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <ChevronRight className="w-3.5 h-3.5" />
                 </div>
@@ -329,8 +330,17 @@ export function ComparisonSlider({
         {/* VIEW MODE 3: 1-Click Toggle View */}
         {viewMode === 'toggle' && (
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="Toggle between bare venue and decorated render"
             onClick={() => setToggleActive(!toggleActive)}
-            className="relative w-full h-full cursor-pointer group"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setToggleActive(!toggleActive);
+              }
+            }}
+            className="relative w-full h-full cursor-pointer group focus-ring"
           >
             <img
               src={toggleActive ? originalImage : decoratedImage}
@@ -380,4 +390,4 @@ export function ComparisonSlider({
       </div>
     </section>
   );
-}
+});

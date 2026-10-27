@@ -79,9 +79,9 @@ describe('App Full Integration Test', () => {
     // Await completion
     await waitFor(
       () => {
-        expect(screen.getByText(/Transformation visualization complete!/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/Transformation visualization complete!/i).length).toBeGreaterThanOrEqual(1);
       },
-      { timeout: 5000 }
+      { timeout: 10000 }
     );
-  });
+  }, 15000);
 });

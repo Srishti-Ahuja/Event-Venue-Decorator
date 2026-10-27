@@ -1,6 +1,9 @@
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
+// Stub environment variable in tests so tests run in deterministic simulation mode
+vi.stubEnv('VITE_GEMINI_API_KEY', '');
+
 // Mock canvas-confetti
 vi.mock('canvas-confetti', () => ({
   default: vi.fn()

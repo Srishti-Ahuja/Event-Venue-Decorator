@@ -41,8 +41,14 @@ export function useGeminiPipeline(apiKey) {
     const found = VENUE_TEMPLATES.find((t) => t.id === templateId);
     if (!found) return;
 
+    setCustomVenue((prev) => {
+      if (prev?.dataUrl && prev.dataUrl.startsWith('blob:')) {
+        try { URL.revokeObjectURL(prev.dataUrl); } catch (_) {}
+      }
+      return null;
+    });
+
     setSelectedTemplate(found);
-    setCustomVenue(null);
     setSpecifications(found.defaultSpecs);
     setResult({
       originalImage: found.bareImage,
@@ -67,7 +73,13 @@ export function useGeminiPipeline(apiKey) {
 
   // Set custom uploaded image
   const handleSetCustomVenue = useCallback((uploadedData) => {
-    setCustomVenue(uploadedData);
+    setCustomVenue((prev) => {
+      if (prev?.dataUrl && prev.dataUrl.startsWith('blob:')) {
+        try { URL.revokeObjectURL(prev.dataUrl); } catch (_) {}
+      }
+      return uploadedData;
+    });
+
     setSelectedTemplate(null);
     setResult((prev) => ({
       ...prev,

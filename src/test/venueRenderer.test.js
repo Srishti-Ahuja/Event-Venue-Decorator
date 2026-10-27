@@ -89,4 +89,26 @@ describe('In-Place Venue Redecoration Engine', () => {
 
     expect(result).toMatch(/^data:image\/jpeg/);
   });
+
+  it('throws an error if imageSrc is missing or empty', async () => {
+    await expect(redecorateVenueImage({
+      imageSrc: null,
+      specifications: {}
+    })).rejects.toThrow('Image source is required');
+
+    await expect(redecorateVenueImage({
+      imageSrc: '',
+      specifications: {}
+    })).rejects.toThrow('Image source is required');
+  });
+
+  it('handles null or empty specifications object gracefully with default styling', async () => {
+    const result = await redecorateVenueImage({
+      imageSrc: 'data:image/jpeg;base64,mockBase64',
+      specifications: null
+    });
+
+    expect(typeof result).toBe('string');
+    expect(result).toMatch(/^data:image\/jpeg/);
+  });
 });

@@ -113,6 +113,41 @@ describe('DecorChecklist Component', () => {
     expect(updatedList.some((i) => i.name === 'Ice Sculpture')).toBe(true);
   });
 
+  it('rejects adding custom items with whitespace-only names and bounds quantity and unitCost', () => {
+    const handleUpdate = vi.fn();
+    render(
+      <DecorChecklist
+        checklist={sampleItems}
+        onUpdateChecklist={handleUpdate}
+      />
+    );
+
+    // Open add item form
+    const addBtn = screen.getByRole('button', { name: /add item/i });
+    fireEvent.click(addBtn);
+
+    const nameInput = screen.getByPlaceholderText(/vintage champagne coupe tower/i);
+    const submitBtn = screen.getByRole('button', { name: /save item/i });
+
+    // Try saving empty name
+    fireEvent.change(nameInput, { target: { value: '   ' } });
+    fireEvent.click(submitBtn);
+    expect(handleUpdate).not.toHaveBeenCalled();
+
+    // Now save with negative cost and 0 quantity
+    fireEvent.change(nameInput, { target: { value: 'Negative Cost Item' } });
+    const costInput = screen.getByLabelText(/unit cost/i);
+    fireEvent.change(costInput, { target: { value: '-100' } });
+    const qtyInput = screen.getByLabelText(/quantity/i);
+    fireEvent.change(qtyInput, { target: { value: '0' } });
+
+    fireEvent.submit(submitBtn.closest('form'));
+    expect(handleUpdate).toHaveBeenCalledTimes(1);
+    const saved = handleUpdate.mock.calls[0][0].find((i) => i.name === 'Negative Cost Item');
+    expect(saved.unitCost).toBeGreaterThanOrEqual(0);
+    expect(saved.quantity).toBeGreaterThanOrEqual(1);
+  });
+
   it('deletes an item when trash icon is clicked', () => {
     const handleUpdate = vi.fn();
     render(
@@ -129,5 +164,37 @@ describe('DecorChecklist Component', () => {
     const updatedList = handleUpdate.mock.calls[0][0];
     expect(updatedList.length).toBe(1);
     expect(updatedList[0].id).toBe('item-2');
+  });
+
+  it('correctly calculates converted budget amounts for GBP and INR', () => {
+    render(
+      <DecorChecklist
+        checklist={sampleItems}
+        onUpdateChecklist={vi.fn()}
+      />
+    );
+
+    // Switch to GBP (rate 0.79) -> 1700 * 0.79 = 1343
+    const gbpBtn = screen.getByRole('button', { name: 'GBP' });
+    fireEvent.click(gbpBtn);
+    expect(screen.getByText('£1,343')).toBeInTheDocument();
+
+    // Switch to INR (rate 85) -> 1700 * 85 = 144,500
+    const inrBtn = screen.getByRole('button', { name: 'INR' });
+    fireEvent.click(inrBtn);
+    expect(screen.getByText(/₹1[,.]?44[,.]?500/)).toBeInTheDocument();
+  });
+
+  it('provides an aria-live region on the budget summary for screen readers', () => {
+    const { container } = render(
+      <DecorChecklist
+        checklist={sampleItems}
+        onUpdateChecklist={vi.fn()}
+      />
+    );
+
+    const liveRegion = container.querySelector('[aria-live="polite"]');
+    expect(liveRegion).toBeInTheDocument();
+    expect(liveRegion).toHaveAttribute('aria-atomic', 'true');
   });
 });

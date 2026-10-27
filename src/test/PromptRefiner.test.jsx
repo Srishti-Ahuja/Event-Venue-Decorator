@@ -75,4 +75,21 @@ describe('PromptRefiner Component', () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Prompt to copy');
   });
+
+  it('avoids double periods when appending modifier chips to a prompt with existing period', () => {
+    render(
+      <PromptRefiner
+        prompt="A romantic rustic barn."
+        spatialAnalysis={sampleSpatial}
+        onRegenerate={vi.fn()}
+      />
+    );
+
+    const chip = screen.getByText(/Switch to flickering candlelight & brass lanterns/i);
+    fireEvent.click(chip);
+
+    const textarea = screen.getByLabelText(/Master Generative Synthesis Prompt/i);
+    expect(textarea.value).not.toContain('..');
+    expect(textarea.value).toMatch(/\.$/);
+  });
 });

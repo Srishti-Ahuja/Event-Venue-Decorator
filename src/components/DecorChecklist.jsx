@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import {
   CheckSquare,
   Square,
@@ -15,15 +15,9 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { exportChecklistToCSV, copyPlanSummaryToClipboard } from '../utils/exportUtils';
+import { CURRENCIES } from '../constants/index.js';
 
-const CURRENCIES = [
-  { code: 'USD', symbol: '$', rate: 1 },
-  { code: 'EUR', symbol: '€', rate: 0.92 },
-  { code: 'GBP', symbol: '£', rate: 0.79 },
-  { code: 'INR', symbol: '₹', rate: 85 }
-];
-
-export function DecorChecklist({
+export const DecorChecklist = memo(function DecorChecklist({
   checklist = [],
   onUpdateChecklist,
   venueTitle = 'Venue Decor Plan',
@@ -84,7 +78,7 @@ export function DecorChecklist({
   }, [checklist, activeCategoryFilter]);
 
   // Toggle item completion
-  const handleToggleItem = (itemId) => {
+  const handleToggleItem = useCallback((itemId) => {
     const updated = checklist.map((item) => {
       if (item.id === itemId) {
         const nextCompleted = !item.completed;
@@ -104,16 +98,16 @@ export function DecorChecklist({
       return item;
     });
     onUpdateChecklist(updated);
-  };
+  }, [checklist, completedCount, totalCount, onUpdateChecklist]);
 
   // Delete item
-  const handleDeleteItem = (itemId) => {
+  const handleDeleteItem = useCallback((itemId) => {
     const updated = checklist.filter((item) => item.id !== itemId);
     onUpdateChecklist(updated);
-  };
+  }, [checklist, onUpdateChecklist]);
 
   // Add custom item
-  const handleSaveNewItem = (e) => {
+  const handleSaveNewItem = useCallback((e) => {
     e.preventDefault();
     if (!newItem.name.trim()) return;
 
@@ -121,8 +115,8 @@ export function DecorChecklist({
       id: `custom-${Date.now()}`,
       category: newItem.category,
       name: newItem.name.trim(),
-      quantity: Number(newItem.quantity) || 1,
-      unitCost: Math.round(Number(newItem.unitCost) / selectedCurrency.rate) || 50,
+      quantity: Math.max(1, Math.round(Number(newItem.quantity)) || 1),
+      unitCost: Math.max(0, Math.round(Number(newItem.unitCost) / selectedCurrency.rate) || 50),
       completed: false,
       notes: newItem.notes.trim()
     };
@@ -136,15 +130,15 @@ export function DecorChecklist({
       notes: ''
     });
     setShowAddItem(false);
-  };
+  }, [newItem, checklist, selectedCurrency.rate, onUpdateChecklist]);
 
   // Export CSV
-  const handleExportCSV = () => {
+  const handleExportCSV = useCallback(() => {
     exportChecklistToCSV(checklist, selectedCurrency.code);
-  };
+  }, [checklist, selectedCurrency.code]);
 
   // Copy Summary
-  const handleCopySummary = async () => {
+  const handleCopySummary = useCallback(async () => {
     const success = await copyPlanSummaryToClipboard({
       title: venueTitle,
       celebration: specifications.celebrationType,
@@ -160,13 +154,13 @@ export function DecorChecklist({
       setCopiedNotice(true);
       setTimeout(() => setCopiedNotice(false), 2500);
     }
-  };
+  }, [venueTitle, specifications, expandedPrompt, checklist, selectedCurrency]);
 
   // Format currency value
-  const formatCost = (valInUsd) => {
+  const formatCost = useCallback((valInUsd) => {
     const converted = Math.round(valInUsd * selectedCurrency.rate);
     return `${selectedCurrency.symbol}${converted.toLocaleString()}`;
-  };
+  }, [selectedCurrency]);
 
   return (
     <section aria-labelledby="checklist-heading" className="space-y-4">
@@ -203,7 +197,11 @@ export function DecorChecklist({
       </div>
 
       {/* Budget Summary Card */}
-      <div className="rounded-2xl glass-panel p-4 border border-pink-500/20 bg-charcoal-800/80 space-y-3">
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        className="rounded-2xl glass-panel p-4 border border-pink-500/20 bg-charcoal-800/80 space-y-3"
+      >
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
           
           <div className="p-2.5 rounded-xl bg-charcoal-900/70 border border-white/5">
@@ -317,8 +315,9 @@ export function DecorChecklist({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
-              <label className="block text-[11px] text-slate-400 mb-1">Item Name</label>
+              <label htmlFor="add-item-name" className="block text-[11px] text-slate-400 mb-1">Item Name</label>
               <input
+                id="add-item-name"
                 type="text"
                 required
                 value={newItem.name}
@@ -329,8 +328,9 @@ export function DecorChecklist({
             </div>
 
             <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Category</label>
+              <label htmlFor="add-item-category" className="block text-[11px] text-slate-400 mb-1">Category</label>
               <select
+                id="add-item-category"
                 value={newItem.category}
                 onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
                 className="w-full px-3 py-1.5 rounded-lg bg-charcoal-900 border border-pink-500/20 text-white text-xs focus-ring"
@@ -346,8 +346,9 @@ export function DecorChecklist({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Quantity</label>
+              <label htmlFor="add-item-quantity" className="block text-[11px] text-slate-400 mb-1">Quantity</label>
               <input
+                id="add-item-quantity"
                 type="number"
                 min="1"
                 value={newItem.quantity}
@@ -357,10 +358,11 @@ export function DecorChecklist({
             </div>
 
             <div>
-              <label className="block text-[11px] text-slate-400 mb-1">
+              <label htmlFor="add-item-unitcost" className="block text-[11px] text-slate-400 mb-1">
                 Unit Cost ({selectedCurrency.code})
               </label>
               <input
+                id="add-item-unitcost"
                 type="number"
                 min="0"
                 value={newItem.unitCost}
@@ -465,4 +467,4 @@ export function DecorChecklist({
       </div>
     </section>
   );
-}
+});

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { BackgroundBokeh } from './components/BackgroundBokeh';
 import { Navbar } from './components/Navbar';
 import { ApiKeyModal } from './components/ApiKeyModal';
@@ -41,20 +41,34 @@ export default function App() {
     handleUpdateChecklist
   } = useGeminiPipeline(apiKey);
 
-  const activeVenueTitle = customVenue
-    ? customVenue.originalName || 'Custom Uploaded Venue'
-    : selectedTemplate?.name || 'Venue Space';
+  const activeVenueTitle = useMemo(() => {
+    return customVenue
+      ? customVenue.originalName || 'Custom Uploaded Venue'
+      : selectedTemplate?.name || 'Venue Space';
+  }, [customVenue, selectedTemplate]);
 
-  const handleResetToDefault = () => {
+  const handleResetToDefault = useCallback(() => {
     handleSelectTemplate('rustic-barn');
-  };
+  }, [handleSelectTemplate]);
 
-  const isGenerating = pipelineState.status === 'stage1' || pipelineState.status === 'stage2';
+  const isGenerating = useMemo(() => {
+    return pipelineState.status === 'stage1' || pipelineState.status === 'stage2';
+  }, [pipelineState.status]);
 
   return (
     <div className="relative min-h-screen text-slate-100 flex flex-col selection:bg-hotpink-500 selection:text-white">
       {/* Background Animated Bokeh & Fairy-Light Atmosphere */}
       <BackgroundBokeh />
+
+      {/* Visually Hidden Screen Reader Status Announcer */}
+      <div
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {pipelineState.statusMessage}
+      </div>
 
       {/* Header Landmark */}
       <Navbar

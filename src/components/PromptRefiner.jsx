@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import {
   Sparkles,
   Wand2,
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { QUICK_MODIFIERS } from '../services/templates';
 
-export function PromptRefiner({
+export const PromptRefiner = memo(function PromptRefiner({
   prompt,
   spatialAnalysis,
   onRegenerate,
@@ -26,29 +26,31 @@ export function PromptRefiner({
     setEditablePrompt(prompt || '');
   }, [prompt]);
 
-  const handleModifierClick = (modifierText) => {
-    const current = editablePrompt.trim();
-    if (!current) {
-      setEditablePrompt(modifierText);
-      return;
-    }
-    // Append seamlessly
-    const separator = current.endsWith('.') ? ' ' : '. ';
-    setEditablePrompt(`${current}${separator}${modifierText}.`);
-  };
+  const handleModifierClick = useCallback((modifierText) => {
+    setEditablePrompt((prev) => {
+      const current = prev.trim();
+      const cleanMod = (modifierText || '').trim().replace(/\.+$/, '');
+      if (!cleanMod) return prev;
+      if (!current) {
+        return `${cleanMod}.`;
+      }
+      const separator = current.endsWith('.') ? ' ' : '. ';
+      return `${current}${separator}${cleanMod}.`;
+    });
+  }, []);
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     if (!editablePrompt) return;
     try {
       await navigator.clipboard.writeText(editablePrompt);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (_) {}
-  };
+  }, [editablePrompt]);
 
-  const handleTriggerReRender = () => {
+  const handleTriggerReRender = useCallback(() => {
     onRegenerate(editablePrompt);
-  };
+  }, [onRegenerate, editablePrompt]);
 
   return (
     <section aria-labelledby="prompt-refiner-heading" className="space-y-4">
@@ -187,4 +189,4 @@ export function PromptRefiner({
       </div>
     </section>
   );
-}
+});

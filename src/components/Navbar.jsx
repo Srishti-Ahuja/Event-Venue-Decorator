@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Sparkles, RefreshCw } from 'lucide-react';
 
-export function Navbar({ apiKey, onResetToDefault }) {
+export const Navbar = memo(function Navbar({ apiKey, onResetToDefault }) {
   const hasKey = Boolean(apiKey && apiKey.trim().length > 0);
 
   return (
@@ -65,4 +65,4 @@ export function Navbar({ apiKey, onResetToDefault }) {
       </div>
     </header>
   );
-}
+});

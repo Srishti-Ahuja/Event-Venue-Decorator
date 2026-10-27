@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { sanitizeInput } from '../utils/sanitize';
 import { VENUE_TEMPLATES } from './templates';
 import { redecorateVenueImage } from './venueRenderer';
+import { MIN_API_KEY_LENGTH } from '../constants/index.js';
 
 /**
  * Creates an instance of GoogleGenAI client
@@ -9,7 +10,7 @@ import { redecorateVenueImage } from './venueRenderer';
  * @returns {GoogleGenAI}
  */
 export function getGenAIClient(apiKey) {
-  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
+  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '' || apiKey.trim().length < MIN_API_KEY_LENGTH) {
     throw new Error('Please enter a valid Google Gemini API key to run live AI queries.');
   }
   return new GoogleGenAI({ apiKey: apiKey.trim() });
@@ -115,7 +116,7 @@ Analyze this venue space and generate the spatial assessment, the master image g
       isSimulated: false
     };
   } catch (error) {
-    console.warn('Gemini 2.5 Flash spatial analysis error, falling back to local engine:', error);
+    console.warn('Stage 1 spatial analysis failed, falling back to local engine:', error?.message || 'Unknown error');
     const simulated = generateSimulatedStage1(venueTitle, specifications);
     return {
       ...simulated,
@@ -210,7 +211,7 @@ export async function runStage2VisualGeneration({
 
     throw new Error('No image returned from Imagen API.');
   } catch (error) {
-    console.warn('Imagen 3 generation fallback to in-place redecoration:', error);
+    console.warn('Imagen 3 generation fallback to in-place redecoration:', error?.message || 'Unknown error');
     
     // Always fall back to redecorating the user's actual image!
     if (originalImageSrc) {

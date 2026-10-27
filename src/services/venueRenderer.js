@@ -81,6 +81,10 @@ export async function redecorateVenueImage({
   specifications,
   promptModifiers = ''
 }) {
+  if (!imageSrc) {
+    throw new Error('Image source is required for venue redecoration.');
+  }
+
   const img = await loadImage(imageSrc);
 
   const width = img.naturalWidth || 1600;
@@ -95,9 +99,10 @@ export async function redecorateVenueImage({
   // Step 1: Draw the original bare space photo as base layer
   ctx.drawImage(img, 0, 0, width, height);
 
-  const palette = PALETTE_COLORS[specifications.colorPalette] || PALETTE_COLORS['Rose Gold & Champagne'];
-  const lighting = specifications.primaryLighting || 'Fairy Lights & Twinkle Canopy';
-  const customNotes = `${specifications.customNotes || ''} ${promptModifiers}`.toLowerCase();
+  const specs = specifications || {};
+  const palette = PALETTE_COLORS[specs.colorPalette] || PALETTE_COLORS['Rose Gold & Champagne'];
+  const lighting = specs.primaryLighting || 'Fairy Lights & Twinkle Canopy';
+  const customNotes = `${specs.customNotes || ''} ${promptModifiers || ''}`.toLowerCase();
 
   // Step 2: Apply Atmospheric Event Lighting & Color Grading
   applyAtmosphericGrading(ctx, width, height, palette, lighting);
@@ -112,7 +117,7 @@ export async function redecorateVenueImage({
   applyCeilingDraperyAndFlorals(ctx, width, height, palette, customNotes);
 
   // Step 6: Centerpiece Focal Altar / Archway
-  applyFocalArch(ctx, width, height, palette, specifications, customNotes);
+  applyFocalArch(ctx, width, height, palette, specs, customNotes);
 
   // Step 7: Banquet Tables, Linens & Tabletop Decor
   applyBanquetTables(ctx, width, height, palette, lighting, customNotes);

@@ -23,14 +23,16 @@ describe('Gemini Service & Two-Stage Multimodal AI Pipeline', () => {
   });
 
   describe('getGenAIClient', () => {
-    it('throws when apiKey is empty or non-string', () => {
+    it('throws when apiKey is empty, non-string, whitespace, or shorter than 20 characters', () => {
       expect(() => getGenAIClient('')).toThrow('Please enter a valid Google Gemini API key');
+      expect(() => getGenAIClient('   ')).toThrow('Please enter a valid Google Gemini API key');
       expect(() => getGenAIClient(null)).toThrow('Please enter a valid Google Gemini API key');
       expect(() => getGenAIClient(undefined)).toThrow('Please enter a valid Google Gemini API key');
+      expect(() => getGenAIClient('short-key-123')).toThrow('Please enter a valid Google Gemini API key');
     });
 
-    it('returns a GoogleGenAI instance when apiKey is provided', () => {
-      const client = getGenAIClient('test-api-key-123');
+    it('returns a GoogleGenAI instance when apiKey meets minimum length', () => {
+      const client = getGenAIClient('AIzaSyD-ValidTestKeyForGemini2026');
       expect(client).toBeDefined();
     });
   });
@@ -60,6 +62,20 @@ describe('Gemini Service & Two-Stage Multimodal AI Pipeline', () => {
       expect(result.expandedPrompt).toContain('Bohemian Romantic');
       expect(result.spatialAnalysis).toBeDefined();
       expect(result.checklist.length).toBeGreaterThan(0);
+    });
+
+    it('falls back to simulation with errorNotice when API call fails or encounters 404/rate-limit', async () => {
+      // Pass a key that is long enough to instantiate, but will fail during generateContent
+      const result = await runStage1SpatialAnalysis({
+        apiKey: 'AIzaSyD-ValidLengthKeyThatThrowsError001',
+        specifications: mockSpecs,
+        venueTitle: 'Rustic Barn'
+      });
+
+      expect(result).toBeDefined();
+      expect(result.isSimulated).toBe(true);
+      expect(result.errorNotice).toBeDefined();
+      expect(result.errorNotice).toContain('Switched to local visual simulation engine');
     });
 
     it('generates simulated spatial layout analysis with architectural anchors', () => {
@@ -107,6 +123,21 @@ describe('Gemini Service & Two-Stage Multimodal AI Pipeline', () => {
 
       expect(result).toBeDefined();
       expect(result.imageUrl).toContain('unsplash.com');
+    });
+
+    it('falls back to in-place redecoration when imagen3 mode fails', async () => {
+      const result = await runStage2VisualGeneration({
+        apiKey: 'AIzaSyD-ValidLengthKeyThatThrowsError001',
+        prompt: 'Wedding with flowers',
+        originalImageSrc: 'data:image/jpeg;base64,mockOriginalImage',
+        specifications: mockSpecs,
+        renderMode: 'imagen3'
+      });
+
+      expect(result).toBeDefined();
+      expect(result.isSimulated).toBe(true);
+      expect(result.errorNotice).toBeDefined();
+      expect(result.imageUrl).toMatch(/^data:image\/jpeg/);
     });
   });
 });

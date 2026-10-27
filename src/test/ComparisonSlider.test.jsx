@@ -57,8 +57,16 @@ describe('ComparisonSlider Component', () => {
     fireEvent.keyDown(slider, { key: 'Home' });
     expect(slider).toHaveAttribute('aria-valuenow', '0');
 
+    // Arrow Left at 0 boundary should clamp to 0
+    fireEvent.keyDown(slider, { key: 'ArrowLeft' });
+    expect(slider).toHaveAttribute('aria-valuenow', '0');
+
     // End key to 100
     fireEvent.keyDown(slider, { key: 'End' });
+    expect(slider).toHaveAttribute('aria-valuenow', '100');
+
+    // Arrow Right at 100 boundary should clamp to 100
+    fireEvent.keyDown(slider, { key: 'ArrowRight' });
     expect(slider).toHaveAttribute('aria-valuenow', '100');
   });
 
@@ -96,6 +104,43 @@ describe('ComparisonSlider Component', () => {
     fireEvent.click(toggleContainer);
 
     expect(screen.getByText(/Showing: Bare Venue Space/i)).toBeInTheDocument();
+  });
+
+  it('allows flipping toggle view with Enter and Space keys for keyboard accessibility', () => {
+    render(
+      <ComparisonSlider
+        originalImage="https://example.com/bare.jpg"
+        decoratedImage="https://example.com/decorated.jpg"
+        title="Historic Barn"
+      />
+    );
+
+    const toggleModeBtn = screen.getByRole('button', { name: /toggle view/i });
+    fireEvent.click(toggleModeBtn);
+
+    const toggleButton = screen.getByRole('button', { name: /toggle between bare venue and decorated render/i });
+    expect(toggleButton).toBeInTheDocument();
+
+    // Flip with Enter
+    fireEvent.keyDown(toggleButton, { key: 'Enter' });
+    expect(screen.getByText(/Showing: Bare Venue Space/i)).toBeInTheDocument();
+
+    // Flip back with Space
+    fireEvent.keyDown(toggleButton, { key: ' ' });
+    expect(screen.getByText(/Showing: AI Decorated Render/i)).toBeInTheDocument();
+  });
+
+  it('ensures drag handle decorative icons are aria-hidden to screen readers', () => {
+    const { container } = render(
+      <ComparisonSlider
+        originalImage="https://example.com/bare.jpg"
+        decoratedImage="https://example.com/decorated.jpg"
+        title="Historic Barn"
+      />
+    );
+
+    const hiddenChevronContainer = container.querySelector('[aria-hidden="true"].flex.items-center');
+    expect(hiddenChevronContainer).toBeInTheDocument();
   });
 
   it('triggers onDownloadComposite when download button is clicked', () => {

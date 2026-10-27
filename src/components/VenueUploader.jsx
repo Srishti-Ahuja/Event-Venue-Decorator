@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, memo } from 'react';
 import { UploadCloud, Image as ImageIcon, CheckCircle, Info, Sparkles, Building, TreePine, Castle, AlertTriangle } from 'lucide-react';
 import { VENUE_TEMPLATES } from '../services/templates';
-import { processAndCompressImage } from '../utils/sanitize';
+import { processAndCompressImage, validateFileUpload } from '../utils/sanitize';
 
 const ICONS = {
   'rustic-barn': Building,
@@ -9,7 +9,7 @@ const ICONS = {
   'open-lawn': TreePine
 };
 
-export function VenueUploader({
+export const VenueUploader = memo(function VenueUploader({
   selectedTemplate,
   customVenue,
   onSelectTemplate,
@@ -21,41 +21,21 @@ export function VenueUploader({
   const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef(null);
 
-  const handleDragOver = (e) => {
+  const handleDragOver = useCallback((e) => {
     e.preventDefault();
     if (!disabled) setIsDragging(true);
-  };
+  }, [disabled]);
 
-  const handleDragLeave = (e) => {
+  const handleDragLeave = useCallback((e) => {
     e.preventDefault();
     setIsDragging(false);
-  };
+  }, []);
 
-  const handleDrop = async (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (disabled) return;
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      await handleFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileChange = async (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      await handleFile(e.target.files[0]);
-    }
-  };
-
-  const handleFile = async (file) => {
+  const handleFile = useCallback(async (file) => {
     setErrorMessage('');
-    if (!file.type.startsWith('image/')) {
-      setErrorMessage('Please upload a valid image file (PNG, JPG, JPEG, WebP).');
-      return;
-    }
-
-    if (file.size > 20 * 1024 * 1024) {
-      setErrorMessage('File size exceeds 20MB limit. Please upload a smaller image.');
+    const validation = validateFileUpload(file);
+    if (!validation.valid) {
+      setErrorMessage(validation.error);
       return;
     }
 
@@ -68,7 +48,23 @@ export function VenueUploader({
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [onSetCustomVenue]);
+
+  const handleDrop = useCallback(async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (disabled) return;
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await handleFile(e.dataTransfer.files[0]);
+    }
+  }, [disabled, handleFile]);
+
+  const handleFileChange = useCallback(async (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      await handleFile(e.target.files[0]);
+    }
+  }, [handleFile]);
 
   const activeVenueName = customVenue
     ? customVenue.originalName || 'Custom Uploaded Venue'
@@ -229,11 +225,15 @@ export function VenueUploader({
 
       {/* Error message */}
       {errorMessage && (
-        <div className="flex items-center space-x-2 text-xs text-rose-400 bg-rose-950/40 border border-rose-500/30 p-2.5 rounded-lg">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="flex items-center space-x-2 text-xs text-rose-400 bg-rose-950/40 border border-rose-500/30 p-2.5 rounded-lg"
+        >
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
     </section>
   );
-}
+});

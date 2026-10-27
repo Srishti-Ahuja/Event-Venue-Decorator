@@ -24,23 +24,43 @@ describe('Export & Composite Canvas Utilities', () => {
   });
 
   describe('exportChecklistToCSV', () => {
-    it('does nothing if empty checklist passed', () => {
+    it('does nothing if empty checklist or null passed', () => {
       const appendSpy = vi.spyOn(document.body, 'appendChild');
       exportChecklistToCSV([]);
+      exportChecklistToCSV(null);
+      exportChecklistToCSV(undefined);
       expect(appendSpy).not.toHaveBeenCalled();
     });
 
-    it('formats items into CSV and triggers download', () => {
+    it('formats items into CSV, properly escapes quotes per RFC 4180, and triggers download', () => {
       const appendSpy = vi.spyOn(document.body, 'appendChild');
       const items = [
         {
           id: '1',
-          category: 'Lighting',
-          name: 'Fairy Lights "Warm"',
+          category: 'Lighting & "Special" Effects',
+          name: '12" Floating Candle "Glow" Hurricanes',
           quantity: 2,
           unitCost: 100,
           completed: true,
-          notes: 'Across rafters'
+          notes: 'Drape along 6" rafter beams with "fairy" cord'
+        }
+      ];
+
+      exportChecklistToCSV(items, 'USD');
+      expect(appendSpy).toHaveBeenCalled();
+    });
+
+    it('handles items with 0, negative, or missing cost and quantity safely', () => {
+      const appendSpy = vi.spyOn(document.body, 'appendChild');
+      const items = [
+        {
+          id: '2',
+          category: null,
+          name: null,
+          quantity: -5,
+          unitCost: -20,
+          completed: false,
+          notes: null
         }
       ];
 

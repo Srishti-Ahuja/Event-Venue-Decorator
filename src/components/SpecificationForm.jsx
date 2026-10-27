@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, memo } from 'react';
 import {
   Wand2,
   Palette,
@@ -28,7 +28,7 @@ const LIGHTING_ICONS = {
   Sun
 };
 
-export function SpecificationForm({
+export const SpecificationForm = memo(function SpecificationForm({
   specifications,
   onChange,
   onGenerate,
@@ -37,18 +37,18 @@ export function SpecificationForm({
   renderMode = 'inPlace',
   onRenderModeChange
 }) {
-  const handleChange = (field, value) => {
+  const handleChange = useCallback((field, value) => {
     onChange({
       ...specifications,
       [field]: value
     });
-  };
+  }, [onChange, specifications]);
 
-  const handleInsertTag = (tagText) => {
+  const handleInsertTag = useCallback((tagText) => {
     const existing = specifications.customNotes || '';
     const updated = existing ? `${existing.trim()} ${tagText}` : tagText;
     handleChange('customNotes', updated);
-  };
+  }, [specifications.customNotes, handleChange]);
 
   return (
     <section aria-labelledby="specs-heading" className="space-y-4">
@@ -319,4 +319,4 @@ export function SpecificationForm({
       </div>
     </section>
   );
-}
+});
