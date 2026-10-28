@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Download,
@@ -23,6 +23,17 @@ export function ExportModal({
 }) {
   const [isGeneratingComposite, setIsGeneratingComposite] = useState(false);
   const [successNote, setSuccessNote] = useState('');
+
+  // Handle Escape key to close
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 

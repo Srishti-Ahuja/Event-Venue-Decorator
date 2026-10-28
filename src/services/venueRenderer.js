@@ -58,15 +58,27 @@ const PALETTE_COLORS = {
   }
 };
 
+/** Maximum pixel dimension to protect GPU memory and prevent canvas allocation crashes */
+const MAX_CANVAS_DIMENSION = 2048;
+
 /**
  * Loads an image from a source (dataUrl, url, or blob)
+ * Proactively detaches event listeners upon completion to eliminate closure memory leaks.
  */
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Failed to load image for redecoration'));
+    img.onload = () => {
+      img.onload = null;
+      img.onerror = null;
+      resolve(img);
+    };
+    img.onerror = () => {
+      img.onload = null;
+      img.onerror = null;
+      reject(new Error('Failed to load image for redecoration'));
+    };
     img.src = src;
   });
 }
@@ -87,8 +99,19 @@ export async function redecorateVenueImage({
 
   const img = await loadImage(imageSrc);
 
-  const width = img.naturalWidth || 1600;
-  const height = img.naturalHeight || 900;
+  let width = img.naturalWidth || 1600;
+  let height = img.naturalHeight || 900;
+
+  // GPU Memory Guard: Clamp extreme dimensions while strictly preserving aspect ratio
+  if (width > MAX_CANVAS_DIMENSION || height > MAX_CANVAS_DIMENSION) {
+    if (width >= height) {
+      height = Math.round((height * MAX_CANVAS_DIMENSION) / width);
+      width = MAX_CANVAS_DIMENSION;
+    } else {
+      width = Math.round((width * MAX_CANVAS_DIMENSION) / height);
+      height = MAX_CANVAS_DIMENSION;
+    }
+  }
 
   // Create high-res canvas
   const canvas = document.createElement('canvas');

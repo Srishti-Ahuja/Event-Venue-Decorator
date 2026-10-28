@@ -1,17 +1,19 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { BackgroundBokeh } from './components/BackgroundBokeh';
 import { Navbar } from './components/Navbar';
-import { ApiKeyModal } from './components/ApiKeyModal';
 import { VenueUploader } from './components/VenueUploader';
 import { SpecificationForm } from './components/SpecificationForm';
 import { PipelineStatus } from './components/PipelineStatus';
 import { ComparisonSlider } from './components/ComparisonSlider';
 import { DecorChecklist } from './components/DecorChecklist';
 import { PromptRefiner } from './components/PromptRefiner';
-import { ExportModal } from './components/ExportModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useGeminiPipeline } from './hooks/useGeminiPipeline';
+import { ToastProvider } from './context/ToastContext';
 import { Sparkles, Download, Wand2, Shield, Heart } from 'lucide-react';
+
+const ApiKeyModal = lazy(() => import('./components/ApiKeyModal').then(m => ({ default: m.ApiKeyModal })));
+const ExportModal = lazy(() => import('./components/ExportModal').then(m => ({ default: m.ExportModal })));
 
 export default function App() {
   // Read API key from environment variable first, with localStorage fallback
@@ -56,28 +58,41 @@ export default function App() {
   }, [pipelineState.status]);
 
   return (
-    <div className="relative min-h-screen text-slate-100 flex flex-col selection:bg-hotpink-500 selection:text-white">
-      {/* Background Animated Bokeh & Fairy-Light Atmosphere */}
-      <BackgroundBokeh />
+    <ToastProvider>
+      <div className="relative min-h-screen text-slate-100 flex flex-col selection:bg-hotpink-500 selection:text-white">
+        {/* Background Animated Bokeh & Fairy-Light Atmosphere */}
+        <BackgroundBokeh />
 
-      {/* Visually Hidden Screen Reader Status Announcer */}
-      <div
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {pipelineState.statusMessage}
-      </div>
+        {/* WCAG 2.4.1 Accessible Skip-To-Content Link */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-hotpink-600 focus:text-white focus:rounded-xl focus:shadow-pink-glow focus:font-semibold focus:text-xs focus:ring-2 focus:ring-white"
+        >
+          Skip to main content
+        </a>
 
-      {/* Header Landmark */}
-      <Navbar
-        apiKey={apiKey}
-        onResetToDefault={handleResetToDefault}
-      />
+        {/* Visually Hidden Screen Reader Status Announcer */}
+        <div
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {pipelineState.statusMessage}
+        </div>
 
-      {/* Main Landmark */}
-      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
+        {/* Header Landmark */}
+        <Navbar
+          apiKey={apiKey}
+          onResetToDefault={handleResetToDefault}
+        />
+
+        {/* Main Landmark */}
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8 outline-none"
+        >
         
         {/* Hero Title Section */}
         <section aria-labelledby="hero-title" className="text-center max-w-3xl mx-auto space-y-2.5">
@@ -196,26 +211,32 @@ export default function App() {
         </div>
       </footer>
 
-      {/* API Key Modal */}
-      <ApiKeyModal
-        isOpen={isApiKeyModalOpen}
-        onClose={() => setIsApiKeyModalOpen(false)}
-        currentKey={apiKey}
-        onSaveKey={setLocalApiKey}
-        isEnvKey={isEnvKey}
-      />
+      {/* Lazy-Loaded Dialog Modals */}
+      <Suspense fallback={null}>
+        {isApiKeyModalOpen && (
+          <ApiKeyModal
+            isOpen={isApiKeyModalOpen}
+            onClose={() => setIsApiKeyModalOpen(false)}
+            currentKey={apiKey}
+            onSaveKey={setLocalApiKey}
+            isEnvKey={isEnvKey}
+          />
+        )}
 
-      {/* Export & Composite Download Modal */}
-      <ExportModal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        originalImage={result.originalImage}
-        decoratedImage={result.decoratedImage}
-        checklist={result.checklist}
-        venueTitle={activeVenueTitle}
-        specifications={specifications}
-      />
+        {isExportModalOpen && (
+          <ExportModal
+            isOpen={isExportModalOpen}
+            onClose={() => setIsExportModalOpen(false)}
+            originalImage={result.originalImage}
+            decoratedImage={result.decoratedImage}
+            checklist={result.checklist}
+            venueTitle={activeVenueTitle}
+            specifications={specifications}
+          />
+        )}
+      </Suspense>
 
-    </div>
+      </div>
+    </ToastProvider>
   );
 }

@@ -3,6 +3,7 @@ import { sanitizeInput } from '../utils/sanitize';
 import { VENUE_TEMPLATES } from './templates';
 import { redecorateVenueImage } from './venueRenderer';
 import { MIN_API_KEY_LENGTH } from '../constants/index.js';
+import { validateSpecifications, validateChecklistItem } from '../types/index.js';
 
 /**
  * Creates an instance of GoogleGenAI client
@@ -253,16 +254,35 @@ function parseStage1JSON(rawText, specifications, venueTitle) {
     }
 
     const data = JSON.parse(clean);
+
+    // Defensively sanitize prompt (indirect prompt injection defense)
+    const expandedPrompt = data.expandedPrompt
+      ? sanitizeInput(data.expandedPrompt, 1500)
+      : buildFallbackPrompt(specifications, venueTitle);
+
+    // Defensively sanitize spatial layout assessment
+    const rawSpatial = data.spatialAnalysis || {};
+    const spatialAnalysis = {
+      roomType: sanitizeInput(rawSpatial.roomType) || venueTitle,
+      ceilingHeight: sanitizeInput(rawSpatial.ceilingHeight) || 'Spacious high ceilings with rigging capability',
+      architecturalAnchors: Array.isArray(rawSpatial.architecturalAnchors)
+        ? rawSpatial.architecturalAnchors.map(a => sanitizeInput(a)).filter(Boolean)
+        : ['Main perimeter walls', 'Central focal area', 'Entry walkway'],
+      lightingAnalysis: sanitizeInput(rawSpatial.lightingAnalysis) || 'Ambient diffuse lighting suitable for layered accent illumination',
+      surfaceMaterials: sanitizeInput(rawSpatial.surfaceMaterials) || 'Architectural structural finishes with clean sightlines'
+    };
+
+    // Defensively validate and sanitize all vendor checklist items
+    const rawChecklist = Array.isArray(data.checklist) && data.checklist.length > 0
+      ? data.checklist
+      : generateFallbackChecklist(specifications);
+
+    const checklist = rawChecklist.map((item, idx) => validateChecklistItem(item, idx + 1));
+
     return {
-      expandedPrompt: data.expandedPrompt || buildFallbackPrompt(specifications, venueTitle),
-      spatialAnalysis: data.spatialAnalysis || {
-        roomType: venueTitle,
-        ceilingHeight: 'Spacious high ceilings with rigging capability',
-        architecturalAnchors: ['Main perimeter walls', 'Central focal area', 'Entry walkway'],
-        lightingAnalysis: 'Ambient diffuse lighting suitable for layered accent illumination',
-        surfaceMaterials: 'Architectural structural finishes with clean sightlines'
-      },
-      checklist: Array.isArray(data.checklist) && data.checklist.length > 0 ? data.checklist : generateFallbackChecklist(specifications)
+      expandedPrompt,
+      spatialAnalysis,
+      checklist
     };
   } catch (err) {
     console.warn('Could not parse raw JSON from Gemini Stage 1, using structured fallback:', err);
@@ -274,17 +294,18 @@ function parseStage1JSON(rawText, specifications, venueTitle) {
  * Builds a simulated Stage 1 output tailored to the user's specific selections
  */
 export function generateSimulatedStage1(venueTitle, specifications) {
-  const { celebrationType, aestheticStyle, colorPalette, primaryLighting, customNotes } = specifications;
-  const prompt = buildFallbackPrompt(specifications, venueTitle);
-  const checklist = generateFallbackChecklist(specifications);
+  const safeSpecs = validateSpecifications(specifications);
+  const safeTitle = sanitizeInput(venueTitle) || 'Event Space & Reception Hall';
+  const prompt = buildFallbackPrompt(safeSpecs, safeTitle);
+  const checklist = generateFallbackChecklist(safeSpecs);
 
   return {
     expandedPrompt: prompt,
     spatialAnalysis: {
-      roomType: venueTitle || 'Event Space & Reception Hall',
+      roomType: safeTitle,
       ceilingHeight: '28-foot expansive ceiling structure with load-bearing rigging beams',
       architecturalAnchors: ['Central ceremonial focal point', 'Symmetrical side columns', 'Main guest entry axis'],
-      lightingAnalysis: `Natural ambient baseline with optimal dark zones for dramatic ${primaryLighting}. High contrast potential with glowing warm-gold and hot-pink highlights.`,
+      lightingAnalysis: `Natural ambient baseline with optimal dark zones for dramatic ${safeSpecs.primaryLighting}. High contrast potential with glowing warm-gold and hot-pink highlights.`,
       surfaceMaterials: 'Polished architectural floors with light-reflective sheen, neutral textured walls'
     },
     checklist,
@@ -296,9 +317,11 @@ export function generateSimulatedStage1(venueTitle, specifications) {
  * Generates an articulate, photorealistic prompt for Stage 2
  */
 function buildFallbackPrompt(specifications, venueTitle) {
-  const { celebrationType, aestheticStyle, colorPalette, primaryLighting, customNotes } = specifications;
+  const safeSpecs = validateSpecifications(specifications);
+  const safeTitle = sanitizeInput(venueTitle) || 'Venue';
+  const { celebrationType, aestheticStyle, colorPalette, primaryLighting, customNotes } = safeSpecs;
   
-  return `A breathtaking, lavishly decorated ${celebrationType} inside this ${venueTitle}, designed in a ${aestheticStyle} aesthetic. The room is bathed in the warm, magical glow of ${primaryLighting}, casting soft amber and hot-pink bokeh highlights across the space. Sophisticated floral arrangements in ${colorPalette} tones cascade from structural beams and line long banquet tables dressed in floor-length textured linens. Polished surfaces catch warm reflections, crystal glassware sparkles under fairy-light canopies, and the background glows with romantic depth. ${customNotes ? `Special accent details: ${customNotes}.` : ''} Photorealistic architectural interior photography, hyper-detailed textures, volumetric lighting, 8k resolution.`;
+  return `A breathtaking, lavishly decorated ${celebrationType} inside this ${safeTitle}, designed in a ${aestheticStyle} aesthetic. The room is bathed in the warm, magical glow of ${primaryLighting}, casting soft amber and hot-pink bokeh highlights across the space. Sophisticated floral arrangements in ${colorPalette} tones cascade from structural beams and line long banquet tables dressed in floor-length textured linens. Polished surfaces catch warm reflections, crystal glassware sparkles under fairy-light canopies, and the background glows with romantic depth. ${customNotes ? `Special accent details: ${customNotes}.` : ''} Photorealistic architectural interior photography, hyper-detailed textures, volumetric lighting, 8k resolution.`;
 }
 
 /**

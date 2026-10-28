@@ -1,10 +1,11 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { BackgroundBokeh } from '../components/BackgroundBokeh';
 import { PipelineStatus } from '../components/PipelineStatus';
 import { ComparisonSlider } from '../components/ComparisonSlider';
 import { DecorChecklist } from '../components/DecorChecklist';
+import { SpecificationForm } from '../components/SpecificationForm';
 import App from '../App';
 
 describe('Accessibility (a11y) & Semantic Architecture Guardrails', () => {
@@ -58,6 +59,36 @@ describe('Accessibility (a11y) & Semantic Architecture Guardrails', () => {
     const budgetCard = container.querySelector('[aria-live="polite"]');
     expect(budgetCard).toBeInTheDocument();
     expect(budgetCard).toHaveAttribute('aria-atomic', 'true');
+  });
+
+  it('provides semantic radiogroup roles for palette and lighting in SpecificationForm', () => {
+    const mockSpecs = {
+      celebrationType: 'Luxury Gala & Charity Ball',
+      aestheticStyle: 'Luxury Glamour',
+      colorPalette: 'Emerald & Warm Gold',
+      primaryLighting: 'Crystal Chandeliers & Sconces',
+      budgetTier: 'Luxury',
+      guestCount: '200-300',
+      customNotes: ''
+    };
+
+    render(
+      <SpecificationForm
+        specifications={mockSpecs}
+        onChange={() => {}}
+        onGenerate={() => {}}
+      />
+    );
+
+    const paletteGroup = screen.getByRole('radiogroup', { name: /color palette theme/i });
+    expect(paletteGroup).toBeInTheDocument();
+    const selectedPalette = screen.getByRole('radio', { name: /emerald/i });
+    expect(selectedPalette).toHaveAttribute('aria-checked', 'true');
+
+    const lightingGroup = screen.getByRole('radiogroup', { name: /primary lighting atmosphere/i });
+    expect(lightingGroup).toBeInTheDocument();
+    const selectedLighting = screen.getByRole('radio', { name: /crystal chandeliers/i });
+    expect(selectedLighting).toHaveAttribute('aria-checked', 'true');
   });
 
   it('renders a visually-hidden screen reader status announcer in App root', () => {

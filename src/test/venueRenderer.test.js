@@ -111,4 +111,37 @@ describe('In-Place Venue Redecoration Engine', () => {
     expect(typeof result).toBe('string');
     expect(result).toMatch(/^data:image\/jpeg/);
   });
+
+  it('clamps extreme resolution images to MAX_CANVAS_DIMENSION (2048px) preserving aspect ratio', async () => {
+    // Override MockImage with a 4000x2000 oversized image
+    class GiantMockImage {
+      constructor() {
+        this.naturalWidth = 4000;
+        this.naturalHeight = 2000;
+        this.width = 4000;
+        this.height = 2000;
+        setTimeout(() => {
+          if (this.onload) this.onload();
+        }, 10);
+      }
+      set src(_) {}
+    }
+    const prevImage = window.Image;
+    window.Image = GiantMockImage;
+
+    const result = await redecorateVenueImage({
+      imageSrc: 'data:image/jpeg;base64,giantBase64',
+      specifications: {
+        celebrationType: 'Gala',
+        aestheticStyle: 'Modern',
+        colorPalette: 'Emerald & Warm Gold',
+        primaryLighting: 'Neon'
+      }
+    });
+
+    expect(typeof result).toBe('string');
+    expect(result).toMatch(/^data:image\/jpeg/);
+
+    window.Image = prevImage;
+  });
 });

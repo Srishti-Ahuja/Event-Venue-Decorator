@@ -127,13 +127,19 @@ export const SpecificationForm = memo(function SpecificationForm({
             </span>
           </label>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          <div
+            role="radiogroup"
+            aria-label="Color Palette Theme"
+            className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2"
+          >
             {COLOR_PALETTES.map((palette) => {
               const isSelected = specifications.colorPalette === palette.name;
               return (
                 <button
                   key={palette.name}
                   type="button"
+                  role="radio"
+                  aria-checked={isSelected}
                   disabled={isLoading}
                   onClick={() => handleChange('colorPalette', palette.name)}
                   aria-pressed={isSelected}
@@ -172,7 +178,11 @@ export const SpecificationForm = memo(function SpecificationForm({
             <span>Primary Lighting Atmosphere</span>
           </label>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <div
+            role="radiogroup"
+            aria-label="Primary Lighting Atmosphere"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2"
+          >
             {LIGHTING_OPTIONS.map((opt) => {
               const isSelected = specifications.primaryLighting === opt.label;
               const IconComp = LIGHTING_ICONS[opt.icon] || Sparkles;
@@ -181,6 +191,8 @@ export const SpecificationForm = memo(function SpecificationForm({
                 <button
                   key={opt.id}
                   type="button"
+                  role="radio"
+                  aria-checked={isSelected}
                   disabled={isLoading}
                   onClick={() => handleChange('primaryLighting', opt.label)}
                   aria-pressed={isSelected}

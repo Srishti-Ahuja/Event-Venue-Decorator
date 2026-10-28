@@ -45,6 +45,13 @@ export const ComparisonSlider = memo(function ComparisonSlider({
   }, [updatePositionFromClientX]);
 
   // Touch event handlers
+  const handleTouchStart = useCallback((e) => {
+    setIsDragging(true);
+    if (e.touches && e.touches.length > 0) {
+      updatePositionFromClientX(e.touches[0].clientX);
+    }
+  }, [updatePositionFromClientX]);
+
   const handleTouchMove = useCallback((e) => {
     if (e.touches && e.touches.length > 0) {
       updatePositionFromClientX(e.touches[0].clientX);
@@ -61,14 +68,29 @@ export const ComparisonSlider = memo(function ComparisonSlider({
       if (isDragging) setIsDragging(false);
     };
 
+    const handleGlobalTouchMove = (e) => {
+      if (isDragging && e.touches && e.touches.length > 0) {
+        updatePositionFromClientX(e.touches[0].clientX);
+      }
+    };
+    const handleGlobalTouchEnd = () => {
+      if (isDragging) setIsDragging(false);
+    };
+
     if (isDragging) {
       window.addEventListener('mousemove', handleGlobalMouseMove);
       window.addEventListener('mouseup', handleGlobalMouseUp);
+      window.addEventListener('touchmove', handleGlobalTouchMove, { passive: true });
+      window.addEventListener('touchend', handleGlobalTouchEnd);
+      window.addEventListener('touchcancel', handleGlobalTouchEnd);
     }
 
     return () => {
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('touchmove', handleGlobalTouchMove);
+      window.removeEventListener('touchend', handleGlobalTouchEnd);
+      window.removeEventListener('touchcancel', handleGlobalTouchEnd);
     };
   }, [isDragging, updatePositionFromClientX]);
 
@@ -231,10 +253,10 @@ export const ComparisonSlider = memo(function ComparisonSlider({
             aria-valuenow={sliderPos}
             onKeyDown={handleKeyDown}
             onMouseDown={handleMouseDown}
-            onTouchStart={() => setIsDragging(true)}
+            onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={() => setIsDragging(false)}
-            className="relative w-full h-full cursor-ew-resize focus-ring"
+            className="relative w-full h-full cursor-ew-resize focus-ring touch-none"
           >
             {/* Background Layer: Decorated Render (AFTER) */}
             <img

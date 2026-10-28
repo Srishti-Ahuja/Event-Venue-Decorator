@@ -159,4 +159,44 @@ describe('ComparisonSlider Component', () => {
 
     expect(handleDownload).toHaveBeenCalledTimes(1);
   });
+
+  it('updates slider position on touch events and global touch dragging', () => {
+    const { container } = render(
+      <ComparisonSlider
+        originalImage="https://example.com/bare.jpg"
+        decoratedImage="https://example.com/decorated.jpg"
+        title="Historic Barn"
+      />
+    );
+
+    const slider = screen.getByRole('slider');
+    expect(slider).toHaveClass('touch-none');
+
+    const sliderContainer = container.querySelector('.aspect-\\[16\\/9\\]');
+    if (sliderContainer) {
+      vi.spyOn(sliderContainer, 'getBoundingClientRect').mockReturnValue({
+        left: 0,
+        width: 1000,
+        top: 0,
+        right: 1000,
+        bottom: 500,
+        height: 500
+      });
+    }
+
+    // Touch start at clientX = 300 (30%)
+    fireEvent.touchStart(slider, {
+      touches: [{ clientX: 300 }]
+    });
+    expect(slider).toHaveAttribute('aria-valuenow', '30');
+
+    // Global touch move to clientX = 750 (75%)
+    fireEvent.touchMove(window, {
+      touches: [{ clientX: 750 }]
+    });
+    expect(slider).toHaveAttribute('aria-valuenow', '75');
+
+    // Global touch end stops dragging
+    fireEvent.touchEnd(window);
+  });
 });

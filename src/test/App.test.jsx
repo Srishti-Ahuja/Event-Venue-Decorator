@@ -61,7 +61,7 @@ describe('App Full Integration Test', () => {
   it('selects a color palette swatch theme', () => {
     render(<App />);
 
-    const emeraldSwatch = screen.getByRole('button', { name: /emerald/i });
+    const emeraldSwatch = screen.getByRole('radio', { name: /emerald/i });
     fireEvent.click(emeraldSwatch);
 
     expect(screen.getByText('Emerald & Warm Gold')).toBeInTheDocument();

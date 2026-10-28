@@ -16,6 +16,7 @@ import {
 import confetti from 'canvas-confetti';
 import { exportChecklistToCSV, copyPlanSummaryToClipboard } from '../utils/exportUtils';
 import { CURRENCIES } from '../constants/index.js';
+import { useToast } from '../context/ToastContext';
 
 export const DecorChecklist = memo(function DecorChecklist({
   checklist = [],
@@ -28,6 +29,7 @@ export const DecorChecklist = memo(function DecorChecklist({
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('All');
   const [showAddItem, setShowAddItem] = useState(false);
   const [copiedNotice, setCopiedNotice] = useState(false);
+  const toast = useToast();
 
   // New item form state
   const [newItem, setNewItem] = useState({
@@ -135,7 +137,8 @@ export const DecorChecklist = memo(function DecorChecklist({
   // Export CSV
   const handleExportCSV = useCallback(() => {
     exportChecklistToCSV(checklist, selectedCurrency.code);
-  }, [checklist, selectedCurrency.code]);
+    toast.success('Decor checklist CSV exported successfully!');
+  }, [checklist, selectedCurrency.code, toast]);
 
   // Copy Summary
   const handleCopySummary = useCallback(async () => {
@@ -152,9 +155,10 @@ export const DecorChecklist = memo(function DecorChecklist({
 
     if (success) {
       setCopiedNotice(true);
+      toast.success('Decor plan summary copied to clipboard!');
       setTimeout(() => setCopiedNotice(false), 2500);
     }
-  }, [venueTitle, specifications, expandedPrompt, checklist, selectedCurrency]);
+  }, [venueTitle, specifications, expandedPrompt, checklist, selectedCurrency, toast]);
 
   // Format currency value
   const formatCost = useCallback((valInUsd) => {

@@ -65,7 +65,8 @@ describe('Gemini Service & Two-Stage Multimodal AI Pipeline', () => {
     });
 
     it('falls back to simulation with errorNotice when API call fails or encounters 404/rate-limit', async () => {
-      // Pass a key that is long enough to instantiate, but will fail during generateContent
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('404 Model not found'));
+
       const result = await runStage1SpatialAnalysis({
         apiKey: 'AIzaSyD-ValidLengthKeyThatThrowsError001',
         specifications: mockSpecs,
@@ -76,6 +77,8 @@ describe('Gemini Service & Two-Stage Multimodal AI Pipeline', () => {
       expect(result.isSimulated).toBe(true);
       expect(result.errorNotice).toBeDefined();
       expect(result.errorNotice).toContain('Switched to local visual simulation engine');
+
+      fetchSpy.mockRestore();
     });
 
     it('generates simulated spatial layout analysis with architectural anchors', () => {
@@ -138,6 +141,30 @@ describe('Gemini Service & Two-Stage Multimodal AI Pipeline', () => {
       expect(result.isSimulated).toBe(true);
       expect(result.errorNotice).toBeDefined();
       expect(result.imageUrl).toMatch(/^data:image\/jpeg/);
+    });
+  });
+
+  describe('Indirect Prompt Injection Defense (LLM Output Sanitization)', () => {
+    it('disarms malicious script tags and code fences in simulated stage 1 specifications', () => {
+      const maliciousSpecs = {
+        celebrationType: '<script>alert("xss")</script>Gala',
+        aestheticStyle: 'Glamour```rm -rf```',
+        colorPalette: 'Rose Gold & Champagne',
+        primaryLighting: 'Neon',
+        customNotes: '<iframe src="malicious.site"></iframe>Custom floral wall'
+      };
+
+      const result = generateSimulatedStage1('Main Hall', maliciousSpecs);
+      expect(result.expandedPrompt).not.toContain('<script>');
+      expect(result.expandedPrompt).not.toContain('<iframe');
+      expect(result.expandedPrompt).not.toContain('```');
+
+      // Check checklist items are sanitized
+      result.checklist.forEach((item) => {
+        expect(item.name).not.toContain('<script>');
+        expect(item.quantity).toBeGreaterThanOrEqual(1);
+        expect(item.unitCost).toBeGreaterThanOrEqual(0);
+      });
     });
   });
 });
